@@ -77,16 +77,23 @@ class ScientificNumber {
         return `${this.base}e${this.exponent}`;
     }
 
+    roundFloat(n: number, max_digits: number): string {
+        return n.toFixed(max_digits)
+            .toString()
+            .replace(/(\.\d*?[1-9])0+$/g, '$1')  // remove trailing zeros
+            .replace(/\.0+$/, '');
+    }
     toRoundedString(max_digits: number = 6): string {
         if (this.exponent + 1 > max_digits) {
-            const base = this.base.toFixed(max_digits)
-                .toString()
-                .replace(/(\.\d*?[1-9])0+$/g, '$1')  // remove trailing zeros
-                .replace(/\.0+$/, '');
-            return `${base}E${this.exponent}`;
+            // const base = this.base.toFixed(max_digits)
+            //     .toString()
+            //     .replace(/(\.\d*?[1-9])0+$/g, '$1')  // remove trailing zeros
+            // .replace(/\.0+$/, '');
+            const base = this.roundFloat(this.base, max_digits);
+            return `${base}e${this.exponent}`;
         }
         else {
-            return this.toNumber().toString();
+            return this.roundFloat(this.toNumber(), max_digits);
         }
     }
 }

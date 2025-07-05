@@ -14,6 +14,7 @@ export const oneHanded: Keybinds = {
     d: "9",
     c: "0",
     x: ".",
+    z: "e",
     Alt: "Ans",
     4: "+",
     r: "-",
@@ -25,8 +26,7 @@ export const oneHanded: Keybinds = {
     b: "M(",
     Shift: "Enter",
     Space: "()",
-    Escape: "AC",
-    Backtick: "DEL",
+    Backtick: "Backspace",
     // del
     // ac
 };

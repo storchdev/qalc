@@ -9,11 +9,11 @@ class Evaluator {
     functions: Record<string, (args: ScientificNumber[]) => ScientificNumber> = {};
     ans: ScientificNumber | null;
 
-    constructor(ans: number | null = null) {
+    constructor(ans: ScientificNumber | null = null) {
         this.functions["sqrt"] = ([x]) => x.sqrt();
         this.functions["ln"] = ([x]) => x.ln();
 
-        this.ans = ScientificNumber.fromNumber(ans ?? 0);
+        this.ans = ans;
     }
 
     // private replaceMolarMass(expr: string): string {
@@ -27,11 +27,11 @@ class Evaluator {
     //     return expr.replace("Ans", (this.ans ?? 0).toString());
     // }
 
-    evaluate(expr: string): number {
+    evaluate(expr: string): ScientificNumber {
         // const replacedExpr = this.replaceAnswer(this.replaceMolarMass(expr));
         const tokens = this.tokenize(expr);
         const rpn = this.toRPN(tokens);
-        return this.evalRPN(rpn).toNumber();
+        return this.evalRPN(rpn);
     }
 
     tokenize(expr: string): Token[] {
