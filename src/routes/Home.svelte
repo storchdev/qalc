@@ -114,6 +114,10 @@
         let key = keybinds[eKey] ?? e.key;
         console.log(key);
 
+        if (molarMassMode && key !== "()") {
+            return;
+        }
+
         // special keys, they dont type
 
         if (key === "Escape") {
