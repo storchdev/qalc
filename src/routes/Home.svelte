@@ -340,14 +340,22 @@
 </script>
 
 <main>
-    <button
-        class="absolute text-[0.5rem] m-2 p-2 border-2 inline-block rounded font-bold hover:cursor-pointer"
-        onclick={() => {
-            showSettings = !showSettings;
-        }}
-    >
-        {settingsText}
-    </button>
+    <div class="absolute text-[0.5rem] m-2 font-bold inline-block">
+        <button
+            class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+            onclick={() => {
+                showSettings = !showSettings;
+            }}
+        >
+            {settingsText}
+        </button>
+        <a
+            class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+            href="https://github.com/storchdev/qalc"
+        >
+            Info
+        </a>
+    </div>
     <!-- <textarea class="p-2 border-2 rounded font-mono" rows="1"></textarea> -->
     <div class="flex flex-col justify-center items-center h-screen gap-4">
         {#if !showSettings}
