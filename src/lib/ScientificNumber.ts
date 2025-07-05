@@ -50,9 +50,16 @@ class ScientificNumber {
     }
 
     exp(other: ScientificNumber): ScientificNumber {
-        const newBase = Math.pow(this.base, other.base * Math.pow(10, other.exponent));
-        const newExp = Math.pow(10, this.exponent * other.base * Math.pow(10, other.exponent));
-        return new ScientificNumber(newBase, newExp);
+        const baseValue = this.base * Math.pow(10, this.exponent);
+        const powerValue = other.base * Math.pow(10, other.exponent);
+
+        const result = Math.pow(baseValue, powerValue);
+
+        // Convert result to scientific form: base × 10^exponent
+        const exponent = Math.floor(Math.log10(result));
+        const base = result / Math.pow(10, exponent);
+
+        return new ScientificNumber(base, exponent);
     }
 
     ln(): ScientificNumber {

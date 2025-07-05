@@ -16,17 +16,6 @@ class Evaluator {
         this.ans = ans;
     }
 
-    // private replaceMolarMass(expr: string): string {
-    //     return expr.replace(/M\(([A-Za-z0-9()]+)\)/g, (_, formula) => {
-    //         const mass = calculateMolarMass(formula);
-    //         return mass.toString();
-    //     });
-    // }
-
-    // private replaceAnswer(expr: string): string {
-    //     return expr.replace("Ans", (this.ans ?? 0).toString());
-    // }
-
     evaluate(expr: string): ScientificNumber {
         // const replacedExpr = this.replaceAnswer(this.replaceMolarMass(expr));
         const tokens = this.tokenize(expr);
@@ -44,6 +33,7 @@ class Evaluator {
             '+': 1,
             '-': 1,
             '*': 2,
+            'u-': 2,
             '/': 2,
             '^': 3,
         };
@@ -51,7 +41,12 @@ class Evaluator {
         const output: Token[] = [];
         const operators: Token[] = [];
 
+        let prev: Token | null = null;
+        let updatePrev = true;
+
         for (const token of tokens) {
+            updatePrev = true;
+
             if (!isNaN(Number(token))) {
                 output.push(token);
             } else if (this.functions[token]) {
@@ -67,13 +62,16 @@ class Evaluator {
                     output.push(operators.pop()!);
                 }
             } else if (['+', '-', '*', '/', '^'].includes(token)) {
+                const isUnary = token === '-' && (prev === null || ['+', '-', '*', '/', '^', '('].includes(prev));
+                const op = isUnary ? 'u-' : token;
+
                 while (
                     operators.length &&
-                    precedence[operators[operators.length - 1]] >= precedence[token]
+                    precedence[operators[operators.length - 1]] >= precedence[op]
                 ) {
                     output.push(operators.pop()!);
                 }
-                operators.push(token);
+                operators.push(op);
             } else if (token.startsWith('M(') && token.endsWith(')')) {
                 const match = token.match(/^M\(([^()]*)\)$/);
                 if (match) {
@@ -85,6 +83,10 @@ class Evaluator {
             } else if (token === "Ans") {
                 output.push((this.ans ?? 0).toString());
             }
+            updatePrev = true;
+            if (updatePrev) {
+                prev = token;
+            }
         }
 
         while (operators.length) {
@@ -95,6 +97,7 @@ class Evaluator {
     }
 
     evalRPN(tokens: Token[]): ScientificNumber {
+        console.table(tokens);
         const stack: ScientificNumber[] = [];
 
         for (const token of tokens) {
@@ -113,6 +116,9 @@ class Evaluator {
             } else if (this.functions[token]) {
                 const args = [stack.pop()!];
                 stack.push(this.functions[token](args));
+            } else if (token === 'u-') {
+                const a = stack.pop()!;
+                stack.push(ScientificNumber.fromNumber(-1).mul(a));
             } else {
                 throw new Error(`Unknown token: ${token}`);
             }

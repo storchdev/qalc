@@ -15,7 +15,9 @@ A simple and powerful calculator that runs purely in the browser and allows cust
 - [x] save history to local storage
 - [x] fix rounding
 - [x] update state information when moving thru expressions
-- [x] Import local storage
+- [x] import local storage
+- [x] fix exponent bug
+- [x] add unary -
 
 - [ ] pi, trig functions, other?
 - [ ] config editor
