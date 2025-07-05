@@ -123,11 +123,13 @@
             return;
         }
 
-        if (key === "M(") {
-            molarMassMode = true;
+        if (key.includes("(")) {
+            numOpenParens++;
         }
 
-        if (key === "ArrowUp" && index > 0) {
+        if (key === "M(") {
+            molarMassMode = true;
+        } else if (key === "ArrowUp" && index > 0) {
             index--;
             textarea.value = exprHistory[index];
         } else if (key === "ArrowDown" && index < ansHistory.length - 1) {
