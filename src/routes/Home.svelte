@@ -112,7 +112,7 @@
         const remap = eKey in keybinds;
 
         let key = keybinds[eKey] ?? e.key;
-        console.log(key);
+        // console.log(key);
 
         if (molarMassMode && key !== "()") {
             return;
@@ -134,7 +134,7 @@
                 const value = textarea.value;
 
                 const removedKey = textarea.value[pos - 1];
-                console.log(removedKey);
+                // console.log(removedKey);
 
                 textarea.value = value.slice(0, pos - 1) + value.slice(pos);
                 textarea.selectionStart = textarea.selectionEnd = pos - 1;
@@ -184,8 +184,9 @@
                     JSON.stringify(exprHistory),
                 );
                 localStorage.setItem("ansHistory", JSON.stringify(ansHistory));
-            } catch (error) {
-                errorLine = "syntax error";
+            } catch (error: any) {
+                // errorLine = "syntax error";
+                errorLine = error.toString();
             }
             return;
         }

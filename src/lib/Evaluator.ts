@@ -33,9 +33,9 @@ class Evaluator {
             '+': 1,
             '-': 1,
             '*': 2,
-            'u-': 2,
             '/': 2,
-            '^': 3,
+            'u-': 3,
+            '^': 4,
         };
 
         const output: Token[] = [];
@@ -97,7 +97,7 @@ class Evaluator {
     }
 
     evalRPN(tokens: Token[]): ScientificNumber {
-        console.table(tokens);
+        // console.table(tokens);
         const stack: ScientificNumber[] = [];
 
         for (const token of tokens) {
