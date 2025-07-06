@@ -20,6 +20,7 @@ A simple and powerful calculator that runs purely in the browser and allows cust
 - [x] add unary -
 
 - [ ] pi, trig functions, other?
+- [ ] implicit multiplication
 - [ ] config editor
 - [ ] expression templates
 
