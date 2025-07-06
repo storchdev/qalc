@@ -4,6 +4,7 @@ import ScientificNumber from "./ScientificNumber";
 import calculateMolarMass from "./MolarMass";
 
 type Token = string;
+type Precedence = "left" | "right";
 
 class Evaluator {
     functions: Record<string, (args: ScientificNumber[]) => ScientificNumber> = {};
@@ -14,6 +15,30 @@ class Evaluator {
         this.functions["ln"] = ([x]) => x.ln();
 
         this.ans = ans;
+    }
+
+    static getPrecedence(left: string, right: string): Precedence {
+        const precedence: Record<string, number> = {
+            '+': 1,
+            '-': 1,
+            '*': 2,
+            '/': 2,
+            'u-': 3,
+            '^': 4,
+        };
+        if (left === "^" && right === "u-") {
+            return "right";
+        } else if (left === "u-" && right === "u-") {
+            return "right";
+        } else if (left === "^" && right === "^") {
+            return "right";
+        } else if (left === right) {
+            return "left";
+        } else if (precedence[left] >= precedence[right]) {
+            return "left";
+        } else {
+            return "right";
+        }
     }
 
     evaluate(expr: string): ScientificNumber {
@@ -29,15 +54,6 @@ class Evaluator {
     }
 
     toRPN(tokens: Token[]): Token[] {
-        const precedence: Record<string, number> = {
-            '+': 1,
-            '-': 1,
-            '*': 2,
-            '/': 2,
-            'u-': 3,
-            '^': 4,
-        };
-
         const output: Token[] = [];
         const operators: Token[] = [];
 
@@ -67,7 +83,7 @@ class Evaluator {
 
                 while (
                     operators.length &&
-                    precedence[operators[operators.length - 1]] >= precedence[op]
+                    Evaluator.getPrecedence(operators[operators.length - 1], op) === 'left'
                 ) {
                     output.push(operators.pop()!);
                 }
@@ -97,7 +113,7 @@ class Evaluator {
     }
 
     evalRPN(tokens: Token[]): ScientificNumber {
-        // console.table(tokens);
+        console.table(tokens);
         const stack: ScientificNumber[] = [];
 
         for (const token of tokens) {
