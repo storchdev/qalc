@@ -38,6 +38,8 @@
 
     let showSettings: boolean = $state(false);
     let settingsText = $derived(showSettings ? "Back" : "Settings");
+    let useKeybinds = $state(true);
+    let keybindsText = $derived(useKeybinds ? "Keybinds: on" : "Keybinds: off");
     let errorLine = $state("");
 
     function updateFromStorage() {
@@ -45,7 +47,7 @@
         exprHistory = JSON.parse(localStorage.getItem("exprHistory") ?? "[]");
         ansHistory = JSON.parse(localStorage.getItem("ansHistory") ?? "[]");
         maxHistoryLen = parseInt(localStorage.getItem("maxHistoryLen") ?? "50");
-        maxDigits = parseInt(localStorage.getItem("maxDigits") ?? "6");
+        maxDigits = parseInt(localStorage.getItem("maxDigits") ?? "12");
         index = ansHistory.length - 1;
     }
 
@@ -91,16 +93,6 @@
         }
     }
 
-    function processRawKey(rawKey: string): string {
-        if (rawKey === " ") {
-            rawKey = "Space";
-        } else if (rawKey === "`") {
-            rawKey = "Backtick";
-        }
-
-        return keybinds[rawKey] ?? rawKey;
-    }
-
     function handleKeydown(e: KeyboardEvent) {
         let eKey = e.key;
         if (e.key === " ") {
@@ -114,7 +106,10 @@
         let key = keybinds[eKey] ?? e.key;
         // console.log(key);
 
-        if (molarMassMode && key !== "()") {
+        if (molarMassMode && key === "()") {
+            useKeybinds = true;
+        }
+        if (!useKeybinds) {
             return;
         }
 
@@ -158,6 +153,11 @@
         }
         if (key === "Enter") {
             e.preventDefault();
+
+            if (textarea.value === "") {
+                return;
+            }
+
             try {
                 while (numOpenParens > numCloseParens) {
                     textarea.value += ")";
@@ -185,8 +185,8 @@
                 );
                 localStorage.setItem("ansHistory", JSON.stringify(ansHistory));
             } catch (error: any) {
-                // errorLine = "syntax error";
-                errorLine = error.toString();
+                errorLine = "syntax error";
+                // errorLine = error.toString();
             }
             return;
         }
@@ -225,6 +225,7 @@
 
         if (key === "M(") {
             molarMassMode = true;
+            useKeybinds = false;
         }
 
         if (remap) {
@@ -345,21 +346,31 @@
 </script>
 
 <main>
-    <div class="absolute text-[0.5rem] m-2 font-bold inline-block">
+    <div class="absolute m-2 flex flex-col gap-2 text-[0.5rem]">
+        <div class="font-bold inline-block">
+            <button
+                class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+                onclick={() => {
+                    showSettings = !showSettings;
+                }}
+            >
+                {settingsText}
+            </button>
+            <a
+                class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+                href="https://github.com/storchdev/qalc"
+            >
+                Info
+            </a>
+        </div>
         <button
             class="border-2 p-2 rounded font-bold hover:cursor-pointer"
             onclick={() => {
-                showSettings = !showSettings;
+                useKeybinds = !useKeybinds;
             }}
         >
-            {settingsText}
+            {keybindsText}
         </button>
-        <a
-            class="border-2 p-2 rounded font-bold hover:cursor-pointer"
-            href="https://github.com/storchdev/qalc"
-        >
-            Info
-        </a>
     </div>
     <!-- <textarea class="p-2 border-2 rounded font-mono" rows="1"></textarea> -->
     <div class="flex flex-col justify-center items-center h-screen gap-4">
@@ -386,7 +397,7 @@
                 class="w-1/2 h-auto resize-none overflow-hidden whitespace-nowrap border-2 rounded p-2 font-mono"
                 rows="1"
             ></textarea>
-            <p class="text-red-700 font-bold">{errorLine}</p>
+            <p class="text-red-700 font-bold text-[0.5rem]">{errorLine}</p>
         {/if}
         <!-- <div>opening={numOpenParens}, closing={numCloseParens}</div> -->
         {#if showSettings}
