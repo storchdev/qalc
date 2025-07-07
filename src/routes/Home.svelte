@@ -246,7 +246,7 @@
     }
 
     function handleAnsClick() {
-        textarea.value = ans ? ans.toRoundedString() : "";
+        textarea.value = ans ? ans.toRoundedString(maxDigits) : "";
     }
 
     function handleExport() {
