@@ -122,7 +122,7 @@ const elementMasses: Masses = {
     Ts: 294,
     Og: 294,
     Uue: 315,
-}
+};
 
 function calculateMolarMass(compound: string): number {
     compound = compound.replace(/\s+/g, "");
@@ -149,13 +149,14 @@ function calculateMolarMass(compound: string): number {
     while (i < compound.length) {
         const char = compound[i];
 
-        if (char === '(') {
-            stack.push('');
-        } else if (char === ')') {
-            if (!stack.length) throw new Error("Unmatched parenthesis in formula");
+        if (char === "(") {
+            stack.push("");
+        } else if (char === ")") {
+            if (!stack.length)
+                throw new Error("Unmatched parenthesis in formula");
             let segment = stack.pop()!;
             i++;
-            let multiplierStr = '';
+            let multiplierStr = "";
             while (i < compound.length && /\d/.test(compound[i])) {
                 multiplierStr += compound[i];
                 i++;
@@ -180,7 +181,7 @@ function calculateMolarMass(compound: string): number {
 
     if (!stack.length) return 0;
 
-    return segmentMass(stack.join(''));
+    return segmentMass(stack.join(""));
 }
 
 export default calculateMolarMass;

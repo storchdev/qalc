@@ -76,7 +76,10 @@ class ScientificNumber {
             return new ScientificNumber(newBase, halfExp);
         } else {
             // sqrt(10) ≈ 3.1623
-            return new ScientificNumber(newBase * Math.sqrt(10), Math.floor(halfExp));
+            return new ScientificNumber(
+                newBase * Math.sqrt(10),
+                Math.floor(halfExp),
+            );
         }
     }
 
@@ -85,10 +88,11 @@ class ScientificNumber {
     }
 
     roundFloat(n: number, max_digits: number): string {
-        return n.toFixed(max_digits)
+        return n
+            .toFixed(max_digits)
             .toString()
-            .replace(/(\.\d*?[1-9])0+$/g, '$1')  // remove trailing zeros
-            .replace(/\.0+$/, '');
+            .replace(/(\.\d*?[1-9])0+$/g, "$1") // remove trailing zeros
+            .replace(/\.0+$/, "");
     }
     toRoundedString(max_digits: number = 6): string {
         if (this.exponent + 1 > max_digits) {
@@ -98,12 +102,10 @@ class ScientificNumber {
             // .replace(/\.0+$/, '');
             const base = this.roundFloat(this.base, max_digits);
             return `${base}e${this.exponent}`;
-        }
-        else {
+        } else {
             return this.roundFloat(this.toNumber(), max_digits);
         }
     }
 }
-
 
 export default ScientificNumber;

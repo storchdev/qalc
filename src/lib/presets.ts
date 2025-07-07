@@ -1,6 +1,6 @@
 interface Keybinds {
     [key: string]: string;
-};
+}
 
 export const oneHanded: Keybinds = {
     1: "1",
@@ -30,4 +30,3 @@ export const oneHanded: Keybinds = {
     // del
     // ac
 };
-
