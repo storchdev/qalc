@@ -6,6 +6,16 @@ import calculateMolarMass from "./MolarMass";
 type Token = string;
 type Precedence = "left" | "right";
 
+enum TokenType {
+    Number,
+    Answer,
+    OpenParen,
+    CloseParen,
+    Function,
+    Operator,
+    MolarMassFunction,
+}
+
 class Evaluator {
     functions: Record<string, (args: ScientificNumber[]) => ScientificNumber> = {};
     ans: ScientificNumber | null;
@@ -24,9 +34,10 @@ class Evaluator {
             '*': 2,
             '/': 2,
             'u-': 3,
+            'i*': 3,
             '^': 4,
         };
-        if (left === "^" && right === "u-") {
+        if (left === "^" && ["u-", "i*"].includes(right)) {
             return "right";
         } else if (left === "u-" && right === "u-") {
             return "right";
@@ -48,9 +59,48 @@ class Evaluator {
         return this.evalRPN(rpn);
     }
 
+    insertImplicitMul(tokens: Token[]) {
+        let left: TokenType;
+        let right: TokenType;
+        let i = 0;
+        while (i < tokens.length - 1) {
+            left = this.classifyToken(tokens[i]);
+            right = this.classifyToken(tokens[i + 1]);
+            if ([TokenType.CloseParen, TokenType.Number, TokenType.Answer].includes(left) && [TokenType.OpenParen, TokenType.Function, TokenType.MolarMassFunction].includes(right)) {
+                tokens.splice(i + 1, 0, "i*");
+                i += 2;
+            }
+            else {
+                i++;
+            }
+        }
+    }
+
+    classifyToken(token: Token): TokenType {
+        if (!isNaN(Number(token))) {
+            return TokenType.Number;
+        } else if (this.functions[token]) {
+            return TokenType.Function;
+        } else if (token === '(') {
+            return TokenType.OpenParen;
+        } else if (token === ')') {
+            return TokenType.CloseParen;
+        } else if (['+', '-', '*', '/', '^', 'i*'].includes(token)) {
+            return TokenType.Operator
+        } else if (token.startsWith('M(') && token.endsWith(')')) {
+            return TokenType.MolarMassFunction;
+        } else if (token === "Ans") {
+            return TokenType.Answer;
+        } else {
+            throw Error("unrecognized token")
+        }
+    }
+
     tokenize(expr: string): Token[] {
         const tokenRegex = /M\([^()]*\)|\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?|Ans|[()+\-*/^]|\w+/g;
-        return expr.match(tokenRegex) ?? [];
+        const tokens = expr.match(tokenRegex) ?? [];
+        this.insertImplicitMul(tokens);
+        return tokens;
     }
 
     toRPN(tokens: Token[]): Token[] {
@@ -58,51 +108,56 @@ class Evaluator {
         const operators: Token[] = [];
 
         let prev: Token | null = null;
-        let updatePrev = true;
+        let isUnary;
+        let op;
+        let match;
 
         for (const token of tokens) {
-            updatePrev = true;
+            switch (this.classifyToken(token)) {
+                case TokenType.Number:
+                    output.push(token);
+                    break;
+                case TokenType.Answer:
+                    output.push((this.ans ?? 0).toString());
+                    break;
+                case TokenType.OpenParen:
+                    operators.push(token);
+                    break;
+                case TokenType.CloseParen:
+                    while (operators.length && operators[operators.length - 1] !== '(') {
+                        output.push(operators.pop()!);
+                    }
+                    operators.pop(); // Remove '('
+                    if (operators.length && this.functions[operators[operators.length - 1]]) {
+                        output.push(operators.pop()!);
+                    }
+                    break;
+                case TokenType.Function:
+                    operators.push(token);
+                    break;
+                case TokenType.Operator:
+                    isUnary = token === '-' && (prev === null || ['+', '-', '*', '/', '^', '('].includes(prev));
+                    op = isUnary ? 'u-' : token;
 
-            if (!isNaN(Number(token))) {
-                output.push(token);
-            } else if (this.functions[token]) {
-                operators.push(token);
-            } else if (token === '(') {
-                operators.push(token);
-            } else if (token === ')') {
-                while (operators.length && operators[operators.length - 1] !== '(') {
-                    output.push(operators.pop()!);
-                }
-                operators.pop(); // Remove '('
-                if (operators.length && this.functions[operators[operators.length - 1]]) {
-                    output.push(operators.pop()!);
-                }
-            } else if (['+', '-', '*', '/', '^'].includes(token)) {
-                const isUnary = token === '-' && (prev === null || ['+', '-', '*', '/', '^', '('].includes(prev));
-                const op = isUnary ? 'u-' : token;
-
-                while (
-                    operators.length &&
-                    Evaluator.getPrecedence(operators[operators.length - 1], op) === 'left'
-                ) {
-                    output.push(operators.pop()!);
-                }
-                operators.push(op);
-            } else if (token.startsWith('M(') && token.endsWith(')')) {
-                const match = token.match(/^M\(([^()]*)\)$/);
-                if (match) {
-                    const innerPart = match[1];
-                    output.push(calculateMolarMass(innerPart).toString());
-                } else {
-                    throw new Error(`Invalid M(...) expression: ${token}`);
-                }
-            } else if (token === "Ans") {
-                output.push((this.ans ?? 0).toString());
+                    while (
+                        operators.length &&
+                        Evaluator.getPrecedence(operators[operators.length - 1], op) === 'left'
+                    ) {
+                        output.push(operators.pop()!);
+                    }
+                    operators.push(op === "i*" ? "*" : op);
+                    break;
+                case TokenType.MolarMassFunction:
+                    match = token.match(/^M\(([^()]*)\)$/);
+                    if (match) {
+                        const innerPart = match[1];
+                        output.push(calculateMolarMass(innerPart).toString());
+                    } else {
+                        throw new Error(`Invalid M(...) expression: ${token}`);
+                    }
+                    break;
             }
-            updatePrev = true;
-            if (updatePrev) {
-                prev = token;
-            }
+            prev = token;
         }
 
         while (operators.length) {
@@ -113,7 +168,7 @@ class Evaluator {
     }
 
     evalRPN(tokens: Token[]): ScientificNumber {
-        console.table(tokens);
+        // console.table(tokens);
         const stack: ScientificNumber[] = [];
 
         for (const token of tokens) {
