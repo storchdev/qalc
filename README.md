@@ -12,15 +12,12 @@ A simple and powerful calculator that runs purely in the browser and allows cust
 ![one-hand keybinds](qalc-reference.png)
 
 ## Todo
-- [x] save history to local storage
-- [x] fix rounding
-- [x] update state information when moving thru expressions
-- [x] import local storage
-- [x] fix exponent bug
-- [x] add unary -
-
 - [ ] pi, trig functions, other?
-- [ ] implicit multiplication
 - [ ] config editor
 - [ ] expression templates
 
+## Finished todos
+- [x] save history to local storage
+- [x] import local storage
+- [x] add unary -
+- [x] implicit multiplication
