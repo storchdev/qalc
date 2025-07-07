@@ -1,7 +1,7 @@
 // import ScientificNumber from "./ScientificNumber.ts";
 // import calculateMolarMass from "./MolarMass.ts";
-import ScientificNumber from "./ScientificNumber";
-import calculateMolarMass from "./MolarMass";
+import ScientificNumber from "./scientificNumber";
+import calculateMolarMass from "./molarMass";
 
 type Token = string;
 type Precedence = "left" | "right";
