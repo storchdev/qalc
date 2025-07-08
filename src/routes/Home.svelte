@@ -3,7 +3,13 @@
     import Evaluator from "../lib/evaluator";
     import { oneHanded } from "../lib/presets";
     import ScientificNumber from "../lib/scientificNumber";
-    import Icon from "@iconify/svelte";
+    import { Fa } from "svelte-fa";
+    import {
+        faChevronDown,
+        faChevronRight,
+    } from "@fortawesome/free-solid-svg-icons";
+    // import FaChevronDown from "svelte-icons/fa/FaChevronDown.svelte";
+    // import FaChevronRight from "svelte-icons/fa/FaChevronRight.svelte";
 
     interface Keybinds {
         [key: string]: string;
@@ -477,9 +483,9 @@ return result;
                             }}
                         >
                             {#if showAdd}
-                                <Icon icon="fa:angle-down" />
+                                <Fa icon={faChevronDown} />
                             {:else}
-                                <Icon icon="fa:angle-right" />
+                                <Fa icon={faChevronRight} />
                             {/if}
                             <p>Add</p>
                         </button>
