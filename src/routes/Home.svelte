@@ -408,9 +408,9 @@ return result;
 
 <main>
     <div class="absolute m-2 flex flex-col gap-2 text-[0.5rem]">
-        <div class="font-bold inline-block">
+        <div class="inline-block font-bold">
             <button
-                class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+                class="p-2 font-bold border-2 rounded hover:cursor-pointer"
                 onclick={() => {
                     showSettings = !showSettings;
                 }}
@@ -418,14 +418,14 @@ return result;
                 {settingsText}
             </button>
             <a
-                class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+                class="p-2 font-bold border-2 rounded hover:cursor-pointer"
                 href="https://github.com/storchdev/qalc"
             >
                 Info
             </a>
         </div>
         <button
-            class="border-2 p-2 rounded font-bold hover:cursor-pointer"
+            class="p-2 font-bold border-2 rounded hover:cursor-pointer"
             onclick={() => {
                 useKeybinds = !useKeybinds;
             }}
@@ -433,10 +433,10 @@ return result;
             {keybindsText}
         </button>
     </div>
-    <!-- <textarea class="p-2 border-2 rounded font-mono" rows="1"></textarea> -->
-    <div class="flex flex-col justify-center items-center h-screen gap-4">
+    <!-- <textarea class="p-2 font-mono border-2 rounded" rows="1"></textarea> -->
+    <div class="flex flex-col items-center justify-center h-screen gap-4">
         {#if !showSettings}
-            <div class="flex flex-col items-end gap-4 w-1/2 p-2">
+            <div class="flex flex-col items-end w-1/2 gap-4 p-2">
                 <button
                     class="text-gray-500 hover:cursor-pointer"
                     onclick={handleExprClick}
@@ -455,23 +455,23 @@ return result;
                 id="textarea"
                 onkeydown={handleKeydown}
                 onwheel={handleScroll}
-                class="w-1/2 h-auto resize-none overflow-hidden whitespace-nowrap border-2 rounded p-2 font-mono"
+                class="w-1/2 h-auto p-2 overflow-hidden font-mono border-2 rounded resize-none whitespace-nowrap"
                 rows="1"
             ></textarea>
             <p class="text-red-700 font-bold text-[0.5rem]">{errorLine}</p>
             <div class="flex flex-col gap-1 w-1/2 text-[0.5rem]">
                 <button
-                    class="rounded border-2 p-2 hover:cursor-pointer w-full"
+                    class="w-full p-2 border-2 rounded hover:cursor-pointer"
                     onclick={() => {
                         showTemplates = !showTemplates;
                     }}>{templateText}</button
                 >
                 {#if showTemplates}
                     <div
-                        class="flex flex-col gap-2 border-2 rounded p-2 w-full"
+                        class="flex flex-col w-full gap-2 p-2 border-2 rounded"
                     >
                         <button
-                            class="flex gap-1 items-center font-bold hover:cursor-pointer"
+                            class="flex items-center gap-1 font-bold hover:cursor-pointer"
                             onclick={() => {
                                 showAdd = !showAdd;
                             }}
@@ -486,24 +486,24 @@ return result;
                         {#if showAdd}
                             <div>
                                 <p
-                                    class="font-bold border-rfont-bold border border-gray-300 rounded-t p-1 inline-block border-b-0"
+                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
                                 >
                                     Name
                                 </p>
                                 <textarea
                                     rows="1"
-                                    class="overflow-hidden resize-none border border-gray-300 rounded-b rounded-tr p-1 focus:outline-none focus:ring-2 w-full"
+                                    class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
                                     placeholder="my cool template"
                                 ></textarea>
                             </div>
                             <div>
                                 <p
-                                    class="font-bold border-rfont-bold border border-gray-300 rounded-t p-1 inline-block border-b-0"
+                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
                                 >
                                     Type
                                 </p>
                                 <select
-                                    class="border border-gray-300 rounded-b rounded-tr p-1 focus:outline-none focus:ring-2 w-full"
+                                    class="w-full p-1 border border-gray-300 rounded-b rounded-tr focus:outline-none focus:ring-2"
                                     bind:value={rawTemplate.type}
                                 >
                                     <option value="expression"
@@ -516,13 +516,13 @@ return result;
                             </div>
                             <div>
                                 <p
-                                    class="font-bold border-rfont-bold border border-gray-300 rounded-t p-1 inline-block border-b-0"
+                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
                                 >
                                     Parameters
                                 </p>
                                 <textarea
                                     rows="1"
-                                    class="w-full overflow-hidden resize-none border border-gray-300 rounded-b rounded-tr p-1 focus:outline-none focus:ring-2"
+                                    class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
                                     placeholder={rawTemplate.type ===
                                     "javascript"
                                         ? javascriptParameterPlaceholder
@@ -531,7 +531,7 @@ return result;
                             </div>
                             <div>
                                 <p
-                                    class="font-bold border-rfont-bold border border-gray-300 rounded-t p-1 inline-block border-b-0"
+                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
                                 >
                                     {rawTemplate.type === "javascript"
                                         ? "Code"
@@ -540,13 +540,13 @@ return result;
                                 {#if rawTemplate.type === "javascript"}
                                     <textarea
                                         rows="10"
-                                        class="resize-none border border-gray-300 rounded-b rounded-tr p-1 focus:outline-none focus:ring-2 w-full"
+                                        class="w-full p-1 border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
                                         placeholder={javascriptContentPlaceholder}
                                     ></textarea>
                                 {:else}
                                     <textarea
                                         rows="1"
-                                        class="overflow-hidden resize-none border border-gray-300 rounded-b rounded-tr p-1 focus:outline-none focus:ring-2 w-full"
+                                        class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
                                         placeholder={expressionContentPlaceholder}
                                     ></textarea>
                                 {/if}
