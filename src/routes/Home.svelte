@@ -1,66 +1,16 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import Evaluator from "../lib/evaluator";
-    import { oneHanded } from "../lib/presets";
-    import ScientificNumber from "../lib/scientificNumber";
     import { Fa } from "svelte-fa";
     import {
         faChevronDown,
         faChevronRight,
+        faTrash,
     } from "@fortawesome/free-solid-svg-icons";
-    // import FaChevronDown from "svelte-icons/fa/FaChevronDown.svelte";
-    // import FaChevronRight from "svelte-icons/fa/FaChevronRight.svelte";
-
-    interface Keybinds {
-        [key: string]: string;
-    }
-
-    interface Template {
-        name: string;
-        type: "expression" | "javascript";
-        parameters: string[];
-        content: string;
-    }
-
-    interface RawTemplate {
-        name: string | null;
-        type: "expression" | "javascript";
-        parameters: string | null;
-        content: string | null;
-    }
-
-    const openParenFollows: string[] = [
-        "+",
-        "-",
-        "*",
-        "/",
-        "^",
-        // "sqrt(",
-        // "ln(",
-        // "M(",
-    ];
-
-    let textarea: HTMLTextAreaElement;
-
-    let keybinds: Keybinds = {};
-    let exprHistory: string[] = [];
-    let ansHistory: number[] = [];
-    let maxHistoryLen: number = 50;
-    let maxDigits = $state(12);
-    let templates: Template[] = $state([]);
-    let showTemplates = $state(true); // change to false for real
-    let templateText = $derived(
-        showTemplates ? "Hide templates" : "Show templates",
-    );
-    let showAdd = $state(true); // change to false for real
-
-    let rawTemplate: RawTemplate = $state({
-        name: null,
-        type: "expression",
-        parameters: null,
-        content: null,
-    });
-    // let addTypeValue: string = $state("expression");
+    import StorageState from "../lib/storageState.svelte";
+    import CalcState from "../lib/calcState.svelte";
+    import type { Template, RawTemplate, Keybinds } from "../lib/interfaces";
+    import TemplateState from "../lib/templateState.svelte";
+    import ScientificNumber from "../lib/scientificNumber";
 
     const javascriptContentPlaceholder = `// nCr example
 // only write the function body
@@ -83,77 +33,45 @@ return result;
     const expressionContentPlaceholder = "(-{b}+sqrt({b}^2-4*{a}*{c}))/(2*{a})";
     const expressionParameterPlaceholder = "a,b,c";
 
-    let index = $state(0);
-    let expr = $derived(exprHistory[index]);
-    let ans = $derived(ScientificNumber.fromNumber(ansHistory[index] ?? 0));
+    //  Main state
+    const mainTextArea: HTMLTextAreaElement =
+        document.createElement("textarea");
+    // dummy element
+    const storage: StorageState = new StorageState();
+    const mainState: CalcState = new CalcState(mainTextArea, storage);
 
-    let numOpenParens: number = $state(0);
-    let numCloseParens: number = $state(0);
-    let molarMassMode: boolean = false;
-
-    let showSettings: boolean = $state(false);
-    let settingsText = $derived(showSettings ? "Back" : "Settings");
-    let useKeybinds = $state(true);
-    let keybindsText = $derived(useKeybinds ? "Keybinds: on" : "Keybinds: off");
-    let errorLine = $state("");
-
-    function updateFromStorage() {
-        keybinds = JSON.parse(localStorage.getItem("keybinds") ?? "{}");
-        exprHistory = JSON.parse(localStorage.getItem("exprHistory") ?? "[]");
-        ansHistory = JSON.parse(localStorage.getItem("ansHistory") ?? "[]");
-        maxHistoryLen = parseInt(
-            localStorage.getItem("maxHistoryLen") ?? maxHistoryLen.toString(),
-        );
-        maxDigits = parseInt(
-            localStorage.getItem("maxDigits") ?? maxDigits.toString(),
-        );
-        index = ansHistory.length - 1;
-        templates = JSON.parse(localStorage.getItem("templates") ?? "[]");
-    }
-
-    // Load keybinds from localStorage on mount
-    onMount(() => {
-        updateFromStorage();
+    // Dropdown state
+    let showTemplates = $state(true); // change to false for real
+    let showAdd = $state(false); // change to false for real
+    let rawTemplate: RawTemplate = $state({
+        name: "",
+        type: "expression",
+        parameters: "",
+        content: "",
     });
 
-    function resetState() {
-        textarea.value = "";
-        numOpenParens = 0;
-        numCloseParens = 0;
-        molarMassMode = false;
-        errorLine = "";
-        // keyStack = [];
-    }
+    // Top bar state
+    let showSettings: boolean = $state(false);
+    let settingsText = $derived(showSettings ? "Back" : "Settings");
+    let keybindsText = $derived(
+        mainState.useKeybinds ? "Keybinds: on" : "Keybinds: off",
+    );
 
-    function handleScroll(e: WheelEvent) {
-        if (e.deltaY < 0) {
-            scrollUp();
-        } else if (e.deltaY > 0) {
-            scrollDown();
-        }
-    }
+    let template: Template | undefined = $state();
 
-    function scrollUp() {
-        if (index > 0) {
-            index--;
-            textarea.value = exprHistory[index];
-            numOpenParens = textarea.value.split("(").length - 1;
-            numCloseParens = textarea.value.split(")").length - 1;
-            molarMassMode = false;
-        }
+    function getTemplateState(t: Template | undefined) {
+        if (t === undefined) return undefined;
+        return new TemplateState(t, storage.keybinds);
     }
+    let templateState = $derived(getTemplateState(template));
 
-    function scrollDown() {
-        if (index < ansHistory.length - 1) {
-            index++;
-            textarea.value = exprHistory[index];
-            numOpenParens = textarea.value.split("(").length - 1;
-            numCloseParens = textarea.value.split(")").length - 1;
-            molarMassMode = false;
-        }
-    }
+    // Param textarea
+    const paramTextArea: HTMLTextAreaElement =
+        document.createElement("textarea");
 
-    function handleKeydown(e: KeyboardEvent) {
+    let paramAreaState = new CalcState(paramTextArea, storage);
+
+    function handleParamKey(e: KeyboardEvent) {
         let eKey = e.key;
         if (e.key === " ") {
             eKey = "Space";
@@ -161,259 +79,201 @@ return result;
             eKey = "Backtick";
         }
 
-        const remap = eKey in keybinds;
+        let key = storage.keybinds[eKey] ?? e.key;
 
-        let key = keybinds[eKey] ?? e.key;
-        // console.log(key);
-
-        if (molarMassMode && key === "()") {
-            useKeybinds = true;
-        }
-        if (!useKeybinds) {
-            return;
-        }
-
-        // special keys, they dont type
-
-        if (key === "Escape") {
+        if (key === "nextParameter" && templateState) {
             e.preventDefault();
-            resetState();
-            return;
-        }
+            const isLast = templateState.pushValue(
+                paramAreaState.textarea.value,
+            );
+            paramAreaState.textarea.value = "";
 
-        if (key === "Backspace") {
-            e.preventDefault();
-            const pos = textarea.selectionStart;
+            if (isLast) {
+                const t = templateState.template;
+                let insertedText: string;
 
-            if (pos > 0) {
-                const value = textarea.value;
+                if (t.type === "javascript") {
+                    let numericArgs: number[] = [];
+                    const tempE = new Evaluator(mainState.ans);
 
-                const removedKey = textarea.value[pos - 1];
-                // console.log(removedKey);
+                    for (const str of templateState.values) {
+                        try {
+                            numericArgs.push(tempE.evaluate(str).toNumber());
+                        } catch (error: unknown) {
+                            alert(`error in evaluating parameter: ${str}`);
+                            template = undefined;
+                            return;
+                        }
+                    }
 
-                textarea.value = value.slice(0, pos - 1) + value.slice(pos);
-                textarea.selectionStart = textarea.selectionEnd = pos - 1;
+                    let templateAns;
+                    try {
+                        const f = new Function(...t.parameters, t.content);
+                        templateAns = f(...numericArgs);
+                    } catch (error: unknown) {
+                        alert(`code errored: ${error}`);
+                        template = undefined;
+                        return;
+                    }
 
-                if (removedKey === "(") {
-                    numOpenParens--;
-                } else if (removedKey === ")") {
-                    numCloseParens--;
+                    if (typeof templateAns !== "number") {
+                        alert("code did not return a number!");
+                        template = undefined;
+                        return;
+                    }
+
+                    insertedText = ScientificNumber.fromNumber(
+                        templateAns,
+                    ).toRoundedString(storage.maxDigits);
+                } else {
+                    let i = 0;
+                    let v;
+                    insertedText = t.content.replace(/\{[^}]+\}/g, () => {
+                        v = templateState.values[i];
+                        i++;
+                        return v;
+                    });
                 }
+                template = undefined;
+
+                // insert text into main area
+                const start = mainState.textarea.selectionStart;
+                const end = mainState.textarea.selectionEnd;
+
+                // Text before and after the current selection
+                const before = mainState.textarea.value.substring(0, start);
+                const after = mainState.textarea.value.substring(end);
+
+                // Insert the text
+                mainState.textarea.value = before + insertedText + after;
+
+                // Move the cursor after the inserted text
+                const newCursorPos = start + insertedText.length;
+                mainState.textarea.selectionStart =
+                    mainState.textarea.selectionEnd = newCursorPos;
+
+                mainState.textarea.focus();
             }
+        } else {
+            paramAreaState.handleKey(e);
+        }
+    }
+
+    // search state
+    let search = $state("");
+    let filteredTemplates = $derived(
+        storage.templates.filter((t) =>
+            t.name.toLowerCase().includes(search.toLowerCase()),
+        ),
+    );
+
+    // Load keybinds from localStorage on mount
+    // onMount(() => {
+    //     storage.pullFromStorage();
+    // });
+
+    function handleAddTemplateClick() {
+        if (rawTemplate.name === "") {
+            alert("name cannot be empty!");
             return;
         }
 
-        if (key === "ArrowUp") {
-            scrollUp();
+        if (rawTemplate.name.length > 10) {
+            alert("name must be 10 characters or under!");
             return;
         }
-        if (key === "ArrowDown") {
-            scrollDown();
-            return;
-        }
-        if (key === "Enter") {
-            e.preventDefault();
 
-            if (textarea.value === "") {
+        for (const t of storage.templates) {
+            if (t.name === rawTemplate.name) {
+                alert("another template already has this name!");
+                return;
+            }
+        }
+        const parameters = rawTemplate.parameters.split(",");
+
+        if (rawTemplate.parameters === "") {
+            alert("include at least 1 parameter!");
+            return;
+        }
+
+        for (const str of parameters) {
+            try {
+                new Function(`let ${str}`);
+            } catch (e) {
+                alert(`invalid parameter name: ${str}`);
+                return;
+            }
+        }
+
+        if (rawTemplate.type === "expression") {
+            const matches = [
+                ...rawTemplate.content.matchAll(/\{([^}]+)\}/g),
+            ].map((m) => m[1]);
+
+            if (matches.length === 0) {
+                alert(
+                    "include at least 1 parameter in this expression! (use {})",
+                );
                 return;
             }
 
+            for (const match of matches) {
+                if (!parameters.includes(match)) {
+                    alert(
+                        `expression includes unspecified parameter: ${match}`,
+                    );
+                    return;
+                }
+            }
+
             try {
-                while (numOpenParens > numCloseParens) {
-                    textarea.value += ")";
-                    numCloseParens++;
-                }
-                const evaluator = new Evaluator(ans);
-                ans = evaluator.evaluate(textarea.value);
-                expr = textarea.value;
-
-                resetState();
-
-                ansHistory.push(ans.toNumber());
-                exprHistory.push(expr);
-
-                if (ansHistory.length >= maxHistoryLen) {
-                    ansHistory.shift();
-                    exprHistory.shift();
-                } else {
-                    index++;
-                }
-
-                localStorage.setItem(
-                    "exprHistory",
-                    JSON.stringify(exprHistory),
+                const testExpr = rawTemplate.content.replace(
+                    /\{[^}]+\}/g,
+                    () => "1",
                 );
-                localStorage.setItem("ansHistory", JSON.stringify(ansHistory));
-            } catch (error: any) {
-                errorLine = "syntax error";
-                // errorLine = error.toString();
+                const evaluator = new Evaluator();
+                evaluator.evaluate(testExpr);
+            } catch (e) {
+                alert("expression contains a syntax error!");
+                return;
             }
+        } else if (rawTemplate.type === "javascript") {
+            let testFunc;
+            try {
+                testFunc = Function(...parameters, rawTemplate.content);
+            } catch (e) {
+                alert(`code failed to compile: ${e}`);
+                return;
+            }
+            let testReturn;
+            try {
+                const testArgs = parameters.map((v, i) => i);
+                testReturn = testFunc(...testArgs);
+            } catch (e) {
+                alert(`code failed to run on test arguments: ${e}`);
+                return;
+            }
+            if (typeof testReturn !== "number") {
+                alert(`code did not return a number!`);
+            }
+        } else {
+            alert("unknown template type!");
             return;
         }
 
-        // typeable keys
-
-        if (key === "()") {
-            if (molarMassMode) {
-                molarMassMode = false;
-                key = ")";
-            } else if (
-                openParenFollows.includes(
-                    textarea.value[textarea.value.length - 1],
-                )
-            ) {
-                key = "(";
-            } else {
-                if (numOpenParens > numCloseParens) {
-                    key = ")";
-                } else if (numOpenParens === numCloseParens) {
-                    key = "(";
-                } else {
-                    key = " ";
-                }
-            }
-        }
-
-        // keyStack.push(key);
-
-        if (molarMassMode) {
-            return;
-        }
-
-        numOpenParens += key.split("(").length - 1;
-        numCloseParens += key.split(")").length - 1;
-
-        if (key === "M(") {
-            molarMassMode = true;
-            useKeybinds = false;
-        }
-
-        if (remap) {
-            e.preventDefault();
-
-            const { selectionStart, selectionEnd, value } = textarea;
-
-            const before = value.slice(0, selectionStart);
-            const after = value.slice(selectionEnd);
-            const newCursorPos = before.length + key.length;
-
-            textarea.value = before + key + after;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
-        }
-    }
-    function handleExprClick(e: MouseEvent) {
-        textarea.value = expr;
-    }
-
-    function handleAnsClick() {
-        textarea.value = ans ? ans.toRoundedString(maxDigits) : "";
-    }
-
-    function handleExport() {
-        const data: { [key: string]: any } = {};
-
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key) {
-                if (
-                    [
-                        "keybinds",
-                        "exprHistory",
-                        "ansHistory",
-                        "templates",
-                    ].includes(key)
-                ) {
-                    data[key] = JSON.parse(localStorage.getItem(key) ?? "{}");
-                } else {
-                    data[key] = JSON.parse(localStorage.getItem(key) ?? "{}");
-                }
-            }
-        }
-
-        const jsonString = JSON.stringify(data, null, 2); // Pretty print
-        const blob = new Blob([jsonString], { type: "application/json" });
-
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "qalc_data.json";
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function clearKeybinds() {
-        localStorage.setItem("keybinds", "{}");
-        keybinds = {};
-        alert("Cleared keybinds!");
-    }
-
-    function setOneHandedKeybinds() {
-        localStorage.setItem("keybinds", JSON.stringify(oneHanded));
-        keybinds = oneHanded;
-        alert("Set default one-handed keybinds!");
-    }
-
-    function handleImport() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
-
-        input.onchange = () => {
-            if (!input.files || input.files.length === 0) {
-                return alert("No file selected");
-            }
-
-            const file = input.files[0];
-            const reader = new FileReader();
-
-            reader.onload = () => {
-                try {
-                    const data = JSON.parse(reader.result as string);
-                    for (const [key, value] of Object.entries(data)) {
-                        if (
-                            ["keybinds", "exprHistory", "ansHistory"].includes(
-                                key,
-                            )
-                        ) {
-                            localStorage.setItem(key, JSON.stringify(value));
-                            data[key] = JSON.parse(
-                                localStorage.getItem(key) ?? "{}",
-                            );
-                        } else {
-                            localStorage.setItem(key, value as string);
-                        }
-                    }
-                    updateFromStorage();
-
-                    alert("Updated your settings!");
-                } catch (err) {
-                    alert("Invalid JSON file");
-                }
-            };
-
-            reader.onerror = () => {
-                alert("Failed to read file");
-            };
-
-            reader.readAsText(file);
+        showAdd = false;
+        const template: Template = {
+            name: rawTemplate.name,
+            type: rawTemplate.type,
+            parameters: parameters,
+            content: rawTemplate.content,
         };
-
-        input.click();
-    }
-
-    function clearHistory() {
-        ansHistory = [];
-        exprHistory = [];
-        index = 0;
-        localStorage.setItem("ansHistory", "[]");
-        localStorage.setItem("exprHistory", "[]");
-        alert("Cleared history!");
+        storage.pushTemplate(template);
     }
 </script>
 
 <main>
-    <div class="absolute m-2 flex flex-col gap-2 text-[0.5rem]">
+    <div class="absolute top-0 m-2 flex flex-col gap-2 text-[0.5rem]">
         <div class="inline-block font-bold">
             <button
                 class="p-2 font-bold border-2 rounded hover:cursor-pointer"
@@ -433,49 +293,78 @@ return result;
         <button
             class="p-2 font-bold border-2 rounded hover:cursor-pointer"
             onclick={() => {
-                useKeybinds = !useKeybinds;
+                mainState.useKeybinds = !mainState.useKeybinds;
+                paramAreaState.useKeybinds = !paramAreaState.useKeybinds;
             }}
         >
             {keybindsText}
         </button>
     </div>
     <!-- <textarea class="p-2 font-mono border-2 rounded" rows="1"></textarea> -->
-    <div class="flex flex-col items-center justify-center h-screen gap-4">
+    <div class="flex flex-col items-center justify-center gap-4 mt-32">
         {#if !showSettings}
             <div class="flex flex-col items-end w-1/2 gap-4 p-2">
                 <button
                     class="text-gray-500 hover:cursor-pointer"
-                    onclick={handleExprClick}
+                    onclick={mainState.handleExprClick}
                 >
-                    {expr}
+                    {mainState.expr}
                 </button>
                 <button
                     class="font-bold hover:cursor-pointer"
-                    onclick={handleAnsClick}
+                    onclick={mainState.handleAnsClick}
                 >
-                    = {ans.toRoundedString(maxDigits)}
+                    = {mainState.ans.toRoundedString(storage.maxDigits)}
                 </button>
             </div>
             <textarea
-                bind:this={textarea}
+                bind:this={mainState.textarea}
                 id="textarea"
-                onkeydown={handleKeydown}
-                onwheel={handleScroll}
+                onkeydown={mainState.handleKey}
+                onwheel={mainState.handleScroll}
                 class="w-1/2 h-auto p-2 overflow-hidden font-mono border-2 rounded resize-none whitespace-nowrap"
                 rows="1"
             ></textarea>
-            <p class="text-red-700 font-bold text-[0.5rem]">{errorLine}</p>
+            {#if template}
+                <div class="text-[0.5rem] flex gap-2 items-center">
+                    <textarea
+                        bind:this={paramAreaState.textarea}
+                        onkeydown={handleParamKey}
+                        class="w-8 p-[2px] pl-1 overflow-hidden border-2 rounded resize-none whitespace-nowrap"
+                        rows="1"
+                        placeholder={templateState?.paramName}
+                    ></textarea>
+                    {#if !templateState?.isLastParam}
+                        <p>
+                            Press {templateState?.nextParamKey} to input the next
+                            parameter!
+                        </p>
+                    {:else}
+                        <p>
+                            Press {templateState?.nextParamKey} to finish!
+                        </p>
+                    {/if}
+                </div>
+            {/if}
+            <p class="text-red-700 font-bold text-[0.5rem]">
+                {mainState.errorLine}
+            </p>
             <div class="flex flex-col gap-1 w-1/2 text-[0.5rem]">
                 <button
-                    class="w-full p-2 border-2 rounded hover:cursor-pointer"
+                    class="flex items-center gap-1 font-bold hover:cursor-pointer"
                     onclick={() => {
                         showTemplates = !showTemplates;
-                    }}>{templateText}</button
+                    }}
                 >
+                    {#if showTemplates}
+                        <Fa icon={faChevronDown} />
+                    {:else}
+                        <Fa icon={faChevronRight} />
+                    {/if}
+                    <p>Templates</p>
+                </button>
                 {#if showTemplates}
-                    <div
-                        class="flex flex-col w-full gap-2 p-2 border-2 rounded"
-                    >
+                    <div class="flex flex-col w-full gap-2 pl-4">
                         <button
                             class="flex items-center gap-1 font-bold hover:cursor-pointer"
                             onclick={() => {
@@ -490,79 +379,126 @@ return result;
                             <p>Add</p>
                         </button>
                         {#if showAdd}
-                            <div>
-                                <p
-                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
-                                >
-                                    Name
-                                </p>
-                                <textarea
-                                    rows="1"
-                                    class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
-                                    placeholder="my cool template"
-                                ></textarea>
-                            </div>
-                            <div>
-                                <p
-                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
-                                >
-                                    Type
-                                </p>
-                                <select
-                                    class="w-full p-1 border border-gray-300 rounded-b rounded-tr focus:outline-none focus:ring-2"
-                                    bind:value={rawTemplate.type}
-                                >
-                                    <option value="expression"
-                                        >Expression</option
+                            <div class="flex flex-col gap-2 pl-4">
+                                <div>
+                                    <p
+                                        class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
                                     >
-                                    <option value="javascript"
-                                        >JavaScript</option
-                                    >
-                                </select>
-                            </div>
-                            <div>
-                                <p
-                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
-                                >
-                                    Parameters
-                                </p>
-                                <textarea
-                                    rows="1"
-                                    class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
-                                    placeholder={rawTemplate.type ===
-                                    "javascript"
-                                        ? javascriptParameterPlaceholder
-                                        : expressionParameterPlaceholder}
-                                ></textarea>
-                            </div>
-                            <div>
-                                <p
-                                    class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
-                                >
-                                    {rawTemplate.type === "javascript"
-                                        ? "Code"
-                                        : "Expression"}
-                                </p>
-                                {#if rawTemplate.type === "javascript"}
-                                    <textarea
-                                        rows="10"
-                                        class="w-full p-1 border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
-                                        placeholder={javascriptContentPlaceholder}
-                                    ></textarea>
-                                {:else}
+                                        Name
+                                    </p>
                                     <textarea
                                         rows="1"
                                         class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
-                                        placeholder={expressionContentPlaceholder}
+                                        placeholder="my cool template"
+                                        bind:value={rawTemplate.name}
                                     ></textarea>
-                                {/if}
+                                </div>
+                                <div>
+                                    <p
+                                        class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
+                                    >
+                                        Type
+                                    </p>
+                                    <select
+                                        class="w-full p-1 border border-gray-300 rounded-b rounded-tr focus:outline-none focus:ring-2"
+                                        bind:value={rawTemplate.type}
+                                    >
+                                        <option value="expression"
+                                            >Expression</option
+                                        >
+                                        <option value="javascript"
+                                            >JavaScript</option
+                                        >
+                                    </select>
+                                </div>
+                                <div>
+                                    <p
+                                        class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
+                                    >
+                                        Parameters
+                                    </p>
+                                    <textarea
+                                        rows="1"
+                                        class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
+                                        placeholder={rawTemplate.type ===
+                                        "javascript"
+                                            ? javascriptParameterPlaceholder
+                                            : expressionParameterPlaceholder}
+                                        bind:value={rawTemplate.parameters}
+                                    ></textarea>
+                                </div>
+                                <div>
+                                    <p
+                                        class="inline-block p-1 font-bold border border-b-0 border-gray-300 rounded-t border-rfont-bold"
+                                    >
+                                        {rawTemplate.type === "javascript"
+                                            ? "Code"
+                                            : "Expression"}
+                                    </p>
+                                    {#if rawTemplate.type === "javascript"}
+                                        <textarea
+                                            rows="10"
+                                            class="w-full p-1 border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
+                                            placeholder={javascriptContentPlaceholder}
+                                            bind:value={rawTemplate.content}
+                                        ></textarea>
+                                    {:else}
+                                        <textarea
+                                            rows="1"
+                                            class="w-full p-1 overflow-hidden border border-gray-300 rounded-b rounded-tr resize-none focus:outline-none focus:ring-2"
+                                            placeholder={expressionContentPlaceholder}
+                                            bind:value={rawTemplate.content}
+                                        ></textarea>
+                                    {/if}
+                                </div>
+                                <div>
+                                    <button
+                                        class="inline-block p-1 font-bold bg-gray-300 border-2 rounded hover:cursor-pointer"
+                                        onclick={handleAddTemplateClick}
+                                        >Add</button
+                                    >
+                                </div>
                             </div>
                         {/if}
-                        {#each templates as template}
-                            <div class="p-2 border-2">
-                                {template.name}
+                        <!-- <div
+                            class="grid grid-cols-1 gap-2 p-2 rounded border-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        > -->
+                        <div class="border-gray-300 border-1 rounded p-2">
+                            <!-- search box goes here -->
+                            <input
+                                type="text"
+                                bind:value={search}
+                                placeholder="Search templates..."
+                                class="w-full p-1 mb-2 border border-gray-400 rounded"
+                            />
+                            <div
+                                class="grid grid-cols-1 gap-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                            >
+                                <!-- <div class="grid grid-cols-1 gap-2"> -->
+                                {#each filteredTemplates as t}
+                                    <div
+                                        class="p-1 font-bold border-2 bg-gray-200 flex justify-around items-center"
+                                    >
+                                        <button
+                                            class="hover:cursor-pointer"
+                                            onclick={() => {
+                                                template = t;
+                                            }}
+                                        >
+                                            {t.name}
+                                        </button>
+                                        <button
+                                            class="hover:cursor-pointer"
+                                            onclick={() => {
+                                                storage.removeTemplate(t);
+                                            }}
+                                        >
+                                            <Fa icon={faTrash} />
+                                        </button>
+                                    </div>
+                                {/each}
                             </div>
-                        {/each}
+                        </div>
                     </div>
                 {/if}
             </div>
@@ -570,13 +506,13 @@ return result;
             <div class="flex gap-4">
                 <button
                     class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                    onclick={setOneHandedKeybinds}
+                    onclick={storage.setOneHandedKeybinds}
                 >
                     Use one-handed preset
                 </button>
                 <button
                     class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                    onclick={clearKeybinds}
+                    onclick={storage.clearKeybinds}
                 >
                     Clear keybinds
                 </button>
@@ -584,13 +520,13 @@ return result;
             <div class="flex gap-4">
                 <button
                     class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                    onclick={handleImport}
+                    onclick={storage.handleImport}
                 >
                     Import data from file
                 </button>
                 <button
                     class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                    onclick={handleExport}
+                    onclick={storage.handleExport}
                 >
                     Export data to file
                 </button>
@@ -598,7 +534,7 @@ return result;
             <div class="flex gap-4">
                 <button
                     class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                    onclick={clearHistory}
+                    onclick={storage.clearHistory}
                 >
                     Clear history
                 </button>

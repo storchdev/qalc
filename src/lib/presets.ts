@@ -27,6 +27,7 @@ export const oneHanded: Keybinds = {
     Shift: "Enter",
     Space: "()",
     Backtick: "Backspace",
+    Tab: "nextParameter",
     // del
     // ac
 };
