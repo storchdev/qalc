@@ -69,6 +69,8 @@ export default class CalcState {
         const remap = eKey in this.storageState.keybinds;
 
         let key = this.storageState.keybinds[eKey] ?? e.key;
+
+        if (key === "Tab") return;
         // console.log(key);
 
         if (this.molarMassMode && key === "()") {
