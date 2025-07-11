@@ -5,6 +5,13 @@
         faChevronDown,
         faChevronRight,
         faTrash,
+        faGear,
+        faCircleQuestion,
+        faToggleOn,
+        faToggleOff,
+        faArrowLeft,
+        faQuestion,
+        faUserLock,
     } from "@fortawesome/free-solid-svg-icons";
     import StorageState from "../lib/storageState.svelte";
     import CalcState from "../lib/calcState.svelte";
@@ -276,35 +283,53 @@ return result;
         };
         storage.pushTemplate(template);
     }
+
+    function toggleKeybinds() {
+        mainState.useKeybinds = !mainState.useKeybinds;
+        paramAreaState.useKeybinds = !paramAreaState.useKeybinds;
+    }
 </script>
 
 <main>
-    <div class="absolute top-0 m-2 flex flex-col gap-2 text-[0.5rem]">
-        <div class="inline-block font-bold">
+    <div class="absolute top-0 m-2 flex flex-col gap-2">
+        <div class="flex justify-between">
             <button
-                class="p-2 font-bold border-2 rounded hover:cursor-pointer"
+                class="m-2 font-bold hover:cursor-pointer"
                 onclick={() => {
                     showSettings = !showSettings;
                 }}
             >
-                {settingsText}
+                {#if !showSettings}
+                    <Fa icon={faGear} />
+                {:else}
+                    <Fa icon={faArrowLeft} />
+                {/if}
             </button>
-            <a
-                class="p-2 font-bold border-2 rounded hover:cursor-pointer"
-                href="https://github.com/storchdev/qalc"
-            >
-                Info
-            </a>
+            <button class="m-2 font-bold">
+                <a
+                    href="https://github.com/storchdev/qalc"
+                    class="hover:cursor-pointer"
+                >
+                    <Fa icon={faCircleQuestion} />
+                </a>
+            </button>
         </div>
-        <button
+        <div class="flex items-center gap-2 border-2 rounded p-2">
+            <p class="text-[0.5rem] font-bold">Keybinds</p>
+            <button onclick={toggleKeybinds} class="hover:cursor-pointer">
+                {#if mainState.useKeybinds}
+                    <Fa icon={faToggleOn} />
+                {:else}
+                    <Fa icon={faToggleOff} />
+                {/if}
+            </button>
+        </div>
+        <!-- <button
             class="p-2 font-bold border-2 rounded hover:cursor-pointer"
-            onclick={() => {
-                mainState.useKeybinds = !mainState.useKeybinds;
-                paramAreaState.useKeybinds = !paramAreaState.useKeybinds;
-            }}
+            onclick={() => {}}
         >
             {keybindsText}
-        </button>
+        </button> -->
     </div>
     <!-- <textarea class="p-2 font-mono border-2 rounded" rows="1"></textarea> -->
     <div class="flex justify-center">
