@@ -527,7 +527,13 @@ return result;
                                             <button
                                                 class="hover:cursor-pointer"
                                                 onclick={() => {
-                                                    storage.removeTemplate(t);
+                                                    const x = confirm(
+                                                        `Delete "${t.name}"?`,
+                                                    );
+                                                    if (x)
+                                                        storage.removeTemplate(
+                                                            t,
+                                                        );
                                                 }}
                                             >
                                                 <Fa icon={faTrash} />
