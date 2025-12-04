@@ -43,7 +43,7 @@ export default class CalcState {
     };
 
     goDown(): void {
-        if (this.storageState.index < this.storageState.ansHistory.length - 1) {
+        if (this.storageState.index < this.storageState.exprHistory.length - 1) {
             this.storageState.index++;
             this.textarea.value =
                 this.storageState.exprHistory[this.storageState.index];
@@ -73,21 +73,34 @@ export default class CalcState {
         if (key === "Tab") return;
         // console.log(key);
 
-        if (this.molarMassMode && key === "()") {
-            this.useKeybinds = true;
-        }
-        if (!this.useKeybinds) {
-            return;
-        }
-
-        // special keys, they dont type
-
-        if (key === "Escape") {
+        if (key === "Enter") {
             e.preventDefault();
-            this.reset();
+
+            if (this.textarea.value === "") {
+                return;
+            }
+
+            try {
+                while (this.numOpenParens > this.numCloseParens) {
+                    this.textarea.value += ")";
+                    this.numCloseParens++;
+                }
+                const evaluator = new Evaluator(this.ans);
+                this.ans = evaluator.evaluate(this.textarea.value);
+                this.expr = this.textarea.value;
+                this.reset();
+                this.storageState.pushHistory(this.ans.toNumber(), this.expr);
+            } catch (error) {
+                this.errorLine = "syntax error";
+                console.log(`syntax error: ${error}`);
+                // errorLine = error.toString();
+            }
             return;
         }
 
+        // if (this.molarMassMode && key === "()") {
+        //     this.useKeybinds = true;
+        // }
         if (key === "Backspace") {
             e.preventDefault();
             const pos = this.textarea.selectionStart;
@@ -111,37 +124,26 @@ export default class CalcState {
             }
             return;
         }
+        // if (!this.useKeybinds) {
+        //     return;
+        // }
+
+        // special keys, they dont type
+
+        if (key === "Escape") {
+            e.preventDefault();
+            this.reset();
+            return;
+        }
 
         if (key === "ArrowUp") {
+            e.preventDefault();
             this.goUp();
             return;
         }
         if (key === "ArrowDown") {
-            this.goDown();
-            return;
-        }
-        if (key === "Enter") {
             e.preventDefault();
-
-            if (this.textarea.value === "") {
-                return;
-            }
-
-            try {
-                while (this.numOpenParens > this.numCloseParens) {
-                    this.textarea.value += ")";
-                    this.numCloseParens++;
-                }
-                const evaluator = new Evaluator(this.ans);
-                this.ans = evaluator.evaluate(this.textarea.value);
-                this.expr = this.textarea.value;
-                this.reset();
-                this.storageState.pushHistory(this.ans.toNumber(), this.expr);
-            } catch (error) {
-                this.errorLine = "syntax error";
-                console.log(`syntax error: ${error}`);
-                // errorLine = error.toString();
-            }
+            this.goDown();
             return;
         }
 
@@ -181,16 +183,16 @@ export default class CalcState {
 
         // keyStack.push(key);
 
-        if (this.molarMassMode) {
-            return;
-        }
+        // if (this.molarMassMode) {
+        //     return;
+        // }
 
         this.numOpenParens += key.split("(").length - 1;
         this.numCloseParens += key.split(")").length - 1;
 
         if (key === "M(") {
             this.molarMassMode = true;
-            this.useKeybinds = false;
+            // this.useKeybinds = false;
         }
 
         if (remap) {

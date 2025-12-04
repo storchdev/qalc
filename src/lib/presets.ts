@@ -25,10 +25,41 @@ export const oneHanded: Keybinds = {
     g: "ln(",
     b: "M(",
     Shift: "Enter",
-    Space: "()",
-    Backtick: "Backspace",
+    " ": "()",
+    "`": "Backspace",
     Tab: "Tab",
     Escape: "Escape",
     // del
     // ac
 };
+
+export const twoHanded: Keybinds = {
+    1: "1",
+    2: "2",
+    3: "3",
+    p: "+",
+    r: "^",
+    4: "4",
+    5: "5",
+    6: "6",
+    7: "7",
+    8: "8",
+    9: "9",
+    ".": ".",
+    0: "0",
+    e: "e",
+    Alt: "Ans",
+    m: "-",
+    t: "*",
+    d: "/",
+    q: "sqrt(",
+    l: "ln(",
+    n: "M(",
+    Enter: "Enter",
+    " ": "()",
+    "`": "Backspace",
+    Tab: "Tab",
+    Escape: "Escape",
+    j: "ArrowDown",
+    k: "ArrowUp"
+}

@@ -332,9 +332,9 @@ return result;
         </button> -->
     </div>
     <!-- <textarea class="p-2 font-mono border-2 rounded" rows="1"></textarea> -->
-    <div class="flex justify-center">
+    <div class="flex items-center justify-center h-[100vh]">
         <div
-            class="flex flex-col items-center justify-center gap-4 mt-32 xl:w-[50%] lg:w-[60%] md:w-[75%] w-[90%]"
+            class="flex flex-col items-center gap-4 xl:w-[50%] lg:w-[60%] md:w-[75%] w-[90%]"
         >
             {#if !showSettings}
                 <div class="flex flex-col items-end gap-4 p-2 w-full">
@@ -555,9 +555,9 @@ return result;
                     </button>
                     <button
                         class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
-                        onclick={storage.clearKeybinds}
+                        onclick={storage.setTwoHandedKeybinds}
                     >
-                        Clear keybinds
+                        Use two-handed preset
                     </button>
                 </div>
                 <div class="flex gap-4">
@@ -575,6 +575,12 @@ return result;
                     </button>
                 </div>
                 <div class="flex gap-4">
+                    <button
+                        class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
+                        onclick={storage.clearKeybinds}
+                    >
+                        Clear keybinds
+                    </button>
                     <button
                         class="rounded p-2 border-2 text-[0.5em] hover:cursor-pointer"
                         onclick={storage.clearHistory}

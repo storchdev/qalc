@@ -1,5 +1,5 @@
 import type { Keybinds, Template } from "./interfaces";
-import { oneHanded } from "./presets";
+import { oneHanded, twoHanded } from "./presets";
 
 export default class StorageState {
     keybinds: Keybinds = $state({});
@@ -104,6 +104,12 @@ export default class StorageState {
         localStorage.setItem("keybinds", JSON.stringify(oneHanded));
         this.keybinds = oneHanded;
         alert("Set default one-handed keybinds!");
+    };
+
+    setTwoHandedKeybinds = () => {
+        localStorage.setItem("keybinds", JSON.stringify(twoHanded));
+        this.keybinds = twoHanded;
+        alert("Set default two-handed keybinds!");
     };
 
     handleImport = () => {
