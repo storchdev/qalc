@@ -57,7 +57,7 @@ export const twoHanded: Keybinds = {
     n: "M(",
     Enter: "Enter",
     " ": "()",
-    "`": "Backspace",
+    Backspace: "Backspace",
     Tab: "Tab",
     Escape: "Escape",
     j: "ArrowDown",
