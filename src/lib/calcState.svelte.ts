@@ -60,11 +60,11 @@ export default class CalcState {
 
     handleKey = (e: KeyboardEvent) => {
         let eKey = e.key;
-        if (e.key === " ") {
-            eKey = "Space";
-        } else if (e.key === "`") {
-            eKey = "Backtick";
-        }
+        // if (e.key === " ") {
+        //     eKey = "Space";
+        // } else if (e.key === "`") {
+        //     eKey = "Backtick";
+        // }
 
         const remap = eKey in this.storageState.keybinds;
 
